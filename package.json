@@ -1,0 +1,16 @@
+{
+  "name": "denft",
+  "version": "1.0.0",
+  "description": "deNFT is a set of smart contracts that aims to provide the ability to send arbitrary ERC-721-compliant NFTs across EVM blockchains over the deBridge protocol.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/debridge-finance/denft.git"
+  },
+  "author": "deBridge",
+  "license": "GPL-3.0-only",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.3.2",
+    "@openzeppelin/contracts-upgradeable": "^4.3.2"
+  },
+  "homepage": "https://debridge.finance"
+}
