@@ -9,7 +9,7 @@
   "author": "deBridge",
   "license": "GPL-3.0-only",
   "dependencies": {
-    "@debridge-finance/debridge-protocol-evm-interfaces": "^4.1.0",
+    "@debridge-finance/debridge-protocol-evm-interfaces": "^1.0.0",
     "@openzeppelin/contracts": "^4.3.2",
     "@openzeppelin/contracts-upgradeable": "^4.3.2"
   },
