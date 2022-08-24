@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.7;
 
+import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 import "./DeNFT.sol";
-import "../periphery/DeBridgeTokenProxy.sol";
 
 contract DeBridgeNFTDeployer is Initializable, AccessControlUpgradeable {
     /* ========== STATE VARIABLES ========== */
@@ -125,7 +125,7 @@ contract DeBridgeNFTDeployer is Initializable, AccessControlUpgradeable {
 
         // deployment code
         bytes memory bytecode = abi.encodePacked(
-            type(DeBridgeTokenProxy).creationCode,
+            type(BeaconProxy).creationCode,
             constructorArgs
         );
 

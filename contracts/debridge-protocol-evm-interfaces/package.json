@@ -1,0 +1,37 @@
+{
+  "name": "@debridge-finance/debridge-protocol-evm-interfaces",
+  "version": "4.1.0",
+  "description": "Send, track and claim arbitrary cross-chain messages over the deBridge protocol programmatically",
+  "repository": "github:debridge-finance/debridge-contracts-v1",
+  "author": "deBridge",
+  "license": "BUSL-1.1",
+  "keywords": [
+    "bridge",
+    "deBridge",
+    "ethereum"
+  ],
+  "homepage": "https://debridge.finance",
+  "scripts": {
+    "lint:fix": "prettier --write 'src/**/*.{js,ts}' 'test/**/*.{js,ts}' && tslint --fix --config tslint.json --project tsconfig.json",
+    "lint": "tslint --config tslint.json --project tsconfig.json",
+    "test": "mocha --exit --recursive 'test/**/*.test.ts'",
+    "clean": "rm -rf build",
+    "build-cjs": "tsc --build tsconfig.json",
+    "build-esm": "tsc --build tsconfig-esm.json",
+    "build": "npm-run-all clean build-*",
+    "prepublishOnly": "npm run build",
+    "prepare": "npm run build"
+  },
+  "files": [
+    "lib/**",
+    "lib.esm/**",
+    "LICENSE",
+    "README.md"
+  ],
+  "devDependencies": {
+  },
+  "dependencies": {
+  },
+  "peerDependencies": {
+  }
+}

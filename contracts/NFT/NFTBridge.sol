@@ -7,14 +7,17 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradea
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "../interfaces/ICallProxy.sol";
-import "../interfaces/IDeBridgeGate.sol";
+
+import "../debridge-protocol-evm-interfaces/contracts/interfaces/ICallProxy.sol";
+import "../debridge-protocol-evm-interfaces/contracts/interfaces/IDeBridgeGate.sol";
+import "../debridge-protocol-evm-interfaces/contracts/interfaces/IDeBridgeGateExtended.sol";
+import "../debridge-protocol-evm-interfaces/contracts/libraries/Flags.sol";
+
 import "./interfaces/IDeNFT.sol";
 import "./interfaces/INFTBridge.sol";
-import "../transfers/DeBridgeGate.sol";
 import "./DeBridgeNFTDeployer.sol";
-import "../libraries/Flags.sol";
 
 contract NFTBridge is
     Initializable,
@@ -43,7 +46,7 @@ contract NFTBridge is
     mapping(uint256 => ChainInfo) public getChainInfo;
 
     /// @dev DeBridgeGate's address on the current chain
-    DeBridgeGate public deBridgeGate;
+    IDeBridgeGateExtended public deBridgeGate;
 
     /// @dev DeBridgeNFTDeployer's address on the current chain
     DeBridgeNFTDeployer public deBridgeNFTDeployer;
@@ -81,7 +84,7 @@ contract NFTBridge is
 
     /* ========== CONSTRUCTOR  ========== */
 
-    function initialize(DeBridgeGate _deBridgeGate) public initializer {
+    function initialize(IDeBridgeGateExtended _deBridgeGate) public initializer {
         deBridgeGate = _deBridgeGate;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -330,7 +333,7 @@ contract NFTBridge is
         deBridgeNFTDeployer = _deBridgeNFTDeployer;
     }
 
-    function setDeBridgeGate(DeBridgeGate _deBridgeGate) external onlyAdmin {
+    function setDeBridgeGate(IDeBridgeGateExtended _deBridgeGate) external onlyAdmin {
         deBridgeGate = _deBridgeGate;
     }
 
