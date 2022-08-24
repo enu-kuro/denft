@@ -10,10 +10,10 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
-import "../debridge-protocol-evm-interfaces/contracts/interfaces/ICallProxy.sol";
-import "../debridge-protocol-evm-interfaces/contracts/interfaces/IDeBridgeGate.sol";
-import "../debridge-protocol-evm-interfaces/contracts/interfaces/IDeBridgeGateExtended.sol";
-import "../debridge-protocol-evm-interfaces/contracts/libraries/Flags.sol";
+import "@debridge-finance/debridge-protocol-evm-interfaces/contracts/interfaces/ICallProxy.sol";
+import "@debridge-finance/debridge-protocol-evm-interfaces/contracts/interfaces/IDeBridgeGate.sol";
+import "@debridge-finance/debridge-protocol-evm-interfaces/contracts/interfaces/IDeBridgeGateExtended.sol";
+import "@debridge-finance/debridge-protocol-evm-interfaces/contracts/libraries/Flags.sol";
 
 import "./interfaces/IDeNFT.sol";
 import "./interfaces/INFTBridge.sol";
