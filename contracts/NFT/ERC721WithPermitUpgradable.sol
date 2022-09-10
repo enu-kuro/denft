@@ -2,10 +2,10 @@
 pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import '@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol';
-import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
+import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-import './interfaces/IERC4494.sol';
+import "./interfaces/IERC4494.sol";
 
 /// @dev OpenZeppelin's ERC721Upgradeable extended with EIP-4494-compliant permits
 /// @notice Based on the reference implementation of the EIP-4494
@@ -14,7 +14,7 @@ import './interfaces/IERC4494.sol';
 abstract contract ERC721WithPermitUpgradable is ERC721Upgradeable, IERC4494 {
     bytes32 public constant PERMIT_TYPEHASH =
         keccak256(
-            'Permit(address spender,uint256 tokenId,uint256 nonce,uint256 deadline)'
+            "Permit(address spender,uint256 tokenId,uint256 nonce,uint256 deadline)"
         );
 
     mapping(uint256 => uint256) private _nonces;
@@ -23,12 +23,18 @@ abstract contract ERC721WithPermitUpgradable is ERC721Upgradeable, IERC4494 {
     bytes32 private _domainSeparator;
     uint256 private _domainChainId;
 
-    function __ERC721WithPermitUpgradable_init(string memory name_, string memory symbol_) internal initializer {
+    function __ERC721WithPermitUpgradable_init(
+        string memory name_,
+        string memory symbol_
+    ) internal initializer {
         __ERC721_init(name_, symbol_);
         __ERC721WithPermitUpgradable_init_unchained();
     }
 
-    function __ERC721WithPermitUpgradable_init_unchained() internal initializer {
+    function __ERC721WithPermitUpgradable_init_unchained()
+        internal
+        initializer
+    {
         uint256 chainId;
         //solhint-disable-next-line no-inline-assembly
         assembly {
@@ -64,10 +70,10 @@ abstract contract ERC721WithPermitUpgradable is ERC721Upgradeable, IERC4494 {
             keccak256(
                 abi.encode(
                     keccak256(
-                        'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'
+                        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
                     ),
                     keccak256(bytes(name())),
-                    keccak256(bytes('1')),
+                    keccak256(bytes("1")),
                     chainId,
                     address(this)
                 )
@@ -78,7 +84,7 @@ abstract contract ERC721WithPermitUpgradable is ERC721Upgradeable, IERC4494 {
     /// @param tokenId token id
     /// @return current token nonce
     function nonces(uint256 tokenId) public view override returns (uint256) {
-        require(_exists(tokenId), '!UNKNOWN_TOKEN!');
+        require(_exists(tokenId), "!UNKNOWN_TOKEN!");
         return _nonces[tokenId];
     }
 
@@ -94,7 +100,7 @@ abstract contract ERC721WithPermitUpgradable is ERC721Upgradeable, IERC4494 {
         uint256 deadline,
         bytes memory signature
     ) external override {
-        require(deadline >= block.timestamp, 'permit expired');
+        require(deadline >= block.timestamp, "permit expired");
 
         bytes32 digest = _buildDigest(
             spender,
@@ -115,7 +121,7 @@ abstract contract ERC721WithPermitUpgradable is ERC721Upgradeable, IERC4494 {
                     digest,
                     signature
                 ),
-            'permit is invalid'
+            "permit is invalid"
         );
 
         _approve(spender, tokenId);
@@ -181,8 +187,8 @@ abstract contract ERC721WithPermitUpgradable is ERC721Upgradeable, IERC4494 {
         returns (bool)
     {
         return
-            interfaceId == type(IERC4494).interfaceId
-            || super.supportsInterface(interfaceId);
+            interfaceId == type(IERC4494).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     // Reserved storage space to allow for layout changes in the future.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.7;
+pragma solidity ^0.8.7;
 
 interface INFTBridge {
     /* ========== STRUCT ========== */
@@ -68,11 +68,7 @@ interface INFTBridge {
     );
 
     /// @param tokenAddress NFT collection's address on the native chain
-    event NFTClaimed(
-        address tokenAddress,
-        uint256 tokenId,
-        address receiver
-    );
+    event NFTClaimed(address tokenAddress, uint256 tokenId, address receiver);
 
     /// @param tokenAddress NFT collection's address on the current chain
     event NFTMinted(

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.7;
+pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -49,12 +49,22 @@ contract DeBridgeNFTDeployer is Initializable, AccessControlUpgradeable {
 
     /* ========== EVENTS ========== */
 
-    event NFTDeployed(address asset, string name, string symbol, string baseUri, uint256 nonce);
+    event NFTDeployed(
+        address asset,
+        string name,
+        string symbol,
+        string baseUri,
+        uint256 nonce
+    );
 
     /* ========== CONSTRUCTOR  ========== */
 
-    function initialize(address _beacon, address _nftBridgeAddress) public initializer {
-        if (_beacon == address(0) || _nftBridgeAddress == address(0)) revert ZeroAddress();
+    function initialize(address _beacon, address _nftBridgeAddress)
+        public
+        initializer
+    {
+        if (_beacon == address(0) || _nftBridgeAddress == address(0))
+            revert ZeroAddress();
 
         beacon = _beacon;
         nftBridgeAddress = _nftBridgeAddress;
@@ -69,19 +79,27 @@ contract DeBridgeNFTDeployer is Initializable, AccessControlUpgradeable {
         string memory _name,
         string memory _symbol
     ) external onlyNFTBridge returns (address deNFTContractAddress) {
-        if (deployedAssetAddresses[_debridgeId] != address(0)) revert DeployedAlready();
+        if (deployedAssetAddresses[_debridgeId] != address(0))
+            revert DeployedAlready();
 
-        deNFTContractAddress = _deployDeNFTContract(nftBridgeAddress, _name, _symbol, "", _debridgeId);
+        deNFTContractAddress = _deployDeNFTContract(
+            nftBridgeAddress,
+            _name,
+            _symbol,
+            "",
+            _debridgeId
+        );
 
         deployedAssetAddresses[_debridgeId] = deNFTContractAddress;
     }
 
     /// @dev Deploys an original collection based on DeNFT contract code
-    function createNFT(address _minter, string memory _name, string memory _symbol, string memory _baseUri)
-        external
-        onlyNFTBridge
-        returns (address deNFTContractAddress)
-    {
+    function createNFT(
+        address _minter,
+        string memory _name,
+        string memory _symbol,
+        string memory _baseUri
+    ) external onlyNFTBridge returns (address deNFTContractAddress) {
         deNFTContractAddress = _deployDeNFTContract(
             _minter,
             _name,
@@ -90,7 +108,8 @@ contract DeBridgeNFTDeployer is Initializable, AccessControlUpgradeable {
             keccak256(abi.encodePacked(nonce))
         );
         bytes32 debridgeId = getDebridgeId(getChainId(), deNFTContractAddress);
-        if (deployedAssetAddresses[debridgeId] != address(0)) revert DuplicateDebridgeId();
+        if (deployedAssetAddresses[debridgeId] != address(0))
+            revert DuplicateDebridgeId();
         deployedAssetAddresses[debridgeId] = deNFTContractAddress;
     }
 
@@ -131,7 +150,12 @@ contract DeBridgeNFTDeployer is Initializable, AccessControlUpgradeable {
 
         assembly {
             // debridgeId is a salt
-            deNFTContractAddress := create2(0, add(bytecode, 0x20), mload(bytecode), salt)
+            deNFTContractAddress := create2(
+                0,
+                add(bytecode, 0x20),
+                mload(bytecode),
+                salt
+            )
 
             if iszero(extcodesize(deNFTContractAddress)) {
                 revert(0, 0)
@@ -145,7 +169,11 @@ contract DeBridgeNFTDeployer is Initializable, AccessControlUpgradeable {
     // ============ VIEWS ============
 
     /// @dev Cross-chain identifier of a native NFT collection
-    function getDebridgeId(uint256 _chainId, address _nftCollectionAddress) public pure returns (bytes32) {
+    function getDebridgeId(uint256 _chainId, address _nftCollectionAddress)
+        public
+        pure
+        returns (bytes32)
+    {
         return keccak256(abi.encodePacked(_chainId, _nftCollectionAddress));
     }
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.7;
+pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol";
@@ -75,7 +75,10 @@ contract NFTBridge is
         bytes memory nativeSender = callProxy.submissionNativeSender();
         uint256 chainIdFrom = callProxy.submissionChainIdFrom();
 
-        if (keccak256(getChainInfo[chainIdFrom].nftBridgeAddress) != keccak256(nativeSender)) {
+        if (
+            keccak256(getChainInfo[chainIdFrom].nftBridgeAddress) !=
+            keccak256(nativeSender)
+        ) {
             revert NativeSenderBadRole(nativeSender, chainIdFrom);
         }
 
@@ -84,7 +87,10 @@ contract NFTBridge is
 
     /* ========== CONSTRUCTOR  ========== */
 
-    function initialize(IDeBridgeGateExtended _deBridgeGate) public initializer {
+    function initialize(IDeBridgeGateExtended _deBridgeGate)
+        public
+        initializer
+    {
         deBridgeGate = _deBridgeGate;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -134,7 +140,9 @@ contract NFTBridge is
             // find the residence chain for the given nft collection
             //
 
-            NativeNFTInfo storage nativeTokenInfo = getNativeInfo[_nftCollectionAddress];
+            NativeNFTInfo storage nativeTokenInfo = getNativeInfo[
+                _nftCollectionAddress
+            ];
 
             // is the current chain a native chain for the given collection?
             isNativeToken = nativeTokenInfo.chainId == 0
@@ -142,7 +150,9 @@ contract NFTBridge is
                 : nativeTokenInfo.chainId == getChainId(); // or token native chain id the same
 
             // take tokenURI before the object being burned!
-            string memory tokenURI = IERC721MetadataUpgradeable(_nftCollectionAddress).tokenURI(_tokenId);
+            string memory tokenURI = IERC721MetadataUpgradeable(
+                _nftCollectionAddress
+            ).tokenURI(_tokenId);
 
             //
             // how to deal with the object?
@@ -151,7 +161,9 @@ contract NFTBridge is
             // are we on the native chain?
             if (isNativeToken) {
                 // burn/mint-complaint collection - burn the original object
-                if (createdTokens[_nftCollectionAddress] == TOKEN_BURNABLE_TYPE) {
+                if (
+                    createdTokens[_nftCollectionAddress] == TOKEN_BURNABLE_TYPE
+                ) {
                     _checkAddAsset(_nftCollectionAddress);
                     IDeNFT(_nftCollectionAddress).burn(_tokenId);
                 }
@@ -164,7 +176,6 @@ contract NFTBridge is
             else {
                 IDeNFT(_nftCollectionAddress).burn(_tokenId);
             }
-
 
             //
             // how to operate with the object on the target chain? Encode the function call
@@ -194,7 +205,6 @@ contract NFTBridge is
             }
         }
 
-
         //
         // send message to deBridge gate
         //
@@ -211,7 +221,13 @@ contract NFTBridge is
             );
         }
 
-        emit NFTSent(_nftCollectionAddress, _tokenId, abi.encodePacked(_receiverAddress), _chainIdTo, nonce);
+        emit NFTSent(
+            _nftCollectionAddress,
+            _tokenId,
+            abi.encodePacked(_receiverAddress),
+            _chainIdTo,
+            nonce
+        );
         nonce++;
     }
 
@@ -226,18 +242,15 @@ contract NFTBridge is
         address _nftCollectionAddress,
         uint256 _tokenId,
         address _receiverAddress
-    )
-        external
-        onlyCrossBridgeAddress
-        whenNotPaused
-    {
-        _safeTransferFrom(_nftCollectionAddress, address(this), _receiverAddress, _tokenId);
-
-        emit NFTClaimed(
+    ) external onlyCrossBridgeAddress whenNotPaused {
+        _safeTransferFrom(
             _nftCollectionAddress,
-            _tokenId,
-            _receiverAddress
+            address(this),
+            _receiverAddress,
+            _tokenId
         );
+
+        emit NFTClaimed(_nftCollectionAddress, _tokenId, _receiverAddress);
     }
 
     /// @dev Mints the original object (if called on the native chain for burn/mint-compatible DeNFT collection)
@@ -261,12 +274,11 @@ contract NFTBridge is
         string memory _nativeSymbol,
         string memory _tokenUri,
         uint256 _nftCollectionType
-    )
-        external
-        onlyCrossBridgeAddress
-        whenNotPaused
-    {
-        bytes32 debridgeId = getDebridgeId(_nativeChainId, _nftCollectionAddress);
+    ) external onlyCrossBridgeAddress whenNotPaused {
+        bytes32 debridgeId = getDebridgeId(
+            _nativeChainId,
+            _nftCollectionAddress
+        );
 
         if (!getBridgeNFTInfo[debridgeId].exist) {
             address currentNFTAddress = deBridgeNFTDeployer.deployAsset(
@@ -288,12 +300,7 @@ contract NFTBridge is
         address tokenAddress = getBridgeNFTInfo[debridgeId].tokenAddress;
         IDeNFT(tokenAddress).mint(_receiverAddress, _tokenId, _tokenUri);
 
-        emit NFTMinted(
-            tokenAddress,
-            _tokenId,
-            _receiverAddress,
-            _tokenUri
-        );
+        emit NFTMinted(tokenAddress, _tokenId, _receiverAddress, _tokenUri);
     }
 
     /// @dev Deploys a new DeNFT collection with the minter role granted to the given address
@@ -319,28 +326,37 @@ contract NFTBridge is
 
     /// @inheritdoc IERC721ReceiverUpgradeable
     function onERC721Received(
-        address /*operator*/,
-        address /*from*/,
-        uint256 /*tokenId*/,
+        address, /*operator*/
+        address, /*from*/
+        uint256, /*tokenId*/
         bytes calldata /*data*/
-    ) external override pure returns (bytes4) {
+    ) external pure override returns (bytes4) {
         return IERC721ReceiverUpgradeable.onERC721Received.selector;
     }
 
     // ============ ADMIN METHODS ============
 
-    function setNFTDeployer(DeBridgeNFTDeployer _deBridgeNFTDeployer) external onlyAdmin {
+    function setNFTDeployer(DeBridgeNFTDeployer _deBridgeNFTDeployer)
+        external
+        onlyAdmin
+    {
         deBridgeNFTDeployer = _deBridgeNFTDeployer;
     }
 
-    function setDeBridgeGate(IDeBridgeGateExtended _deBridgeGate) external onlyAdmin {
+    function setDeBridgeGate(IDeBridgeGateExtended _deBridgeGate)
+        external
+        onlyAdmin
+    {
         deBridgeGate = _deBridgeGate;
     }
 
     /// @dev Sets the address of the NFTBridge contract on the secondary chain, effectively enabling object transfers to it
     /// @param _NFTBridgeAddress The address of the NFTBridge contract deployed on the secondary chain
     /// @param _chainId The id of the secondary chain
-    function addChainSupport(bytes calldata _NFTBridgeAddress, uint256 _chainId) external onlyAdmin {
+    function addChainSupport(bytes calldata _NFTBridgeAddress, uint256 _chainId)
+        external
+        onlyAdmin
+    {
         if (_chainId == 0 || _chainId == getChainId()) {
             revert WrongArgument();
         }
@@ -384,7 +400,9 @@ contract NFTBridge is
         bridgeInfo.tokenAddress = _nftCollectionAddress;
         bridgeInfo.nativeChainId = _nativeChainId;
 
-        NativeNFTInfo storage nativeTokenInfo = getNativeInfo[_nftCollectionAddress];
+        NativeNFTInfo storage nativeTokenInfo = getNativeInfo[
+            _nftCollectionAddress
+        ];
         nativeTokenInfo.chainId = _nativeChainId;
         nativeTokenInfo.tokenAddress = _nativeAddress;
         nativeTokenInfo.name = _nativeName;
@@ -402,7 +420,11 @@ contract NFTBridge is
         );
     }
 
-    function _decodeAddressFromBytes(bytes memory _bytes) internal pure returns (address addr) {
+    function _decodeAddressFromBytes(bytes memory _bytes)
+        internal
+        pure
+        returns (address addr)
+    {
         // See https://ethereum.stackexchange.com/a/50528
         assembly {
             addr := mload(add(_bytes, 20))
@@ -416,7 +438,10 @@ contract NFTBridge is
         _safeTransferFrom(_tokenAddress, msg.sender, address(this), _tokenId);
     }
 
-    function _checkAddAsset(address _tokenAddress) internal returns (bytes32 debridgeId) {
+    function _checkAddAsset(address _tokenAddress)
+        internal
+        returns (bytes32 debridgeId)
+    {
         debridgeId = getDebridgeId(getChainId(), _tokenAddress);
         if (!getBridgeNFTInfo[debridgeId].exist) {
             _addAsset(
@@ -438,10 +463,15 @@ contract NFTBridge is
         address _to,
         uint256 _tokenId
     ) internal {
-        IERC721Upgradeable(_tokenAddress).safeTransferFrom(_from, _to, _tokenId);
+        IERC721Upgradeable(_tokenAddress).safeTransferFrom(
+            _from,
+            _to,
+            _tokenId
+        );
 
         // check that this contract address actually received the object
-        if (IERC721Upgradeable(_tokenAddress).ownerOf(_tokenId) != _to) revert NotReceivedERC721();
+        if (IERC721Upgradeable(_tokenAddress).ownerOf(_tokenId) != _to)
+            revert NotReceivedERC721();
     }
 
     /// @dev encodes a call to `NFTBridge.claim()`
@@ -467,7 +497,9 @@ contract NFTBridge is
         string memory _tokenURI,
         uint256 _nftCollectionType
     ) internal view returns (bytes memory) {
-        NativeNFTInfo memory nativeTokenInfo = getNativeInfo[_nftCollectionAddress];
+        NativeNFTInfo memory nativeTokenInfo = getNativeInfo[
+            _nftCollectionAddress
+        ];
 
         return
             abi.encodeWithSelector(
@@ -490,8 +522,16 @@ contract NFTBridge is
         returns (bytes memory)
     {
         IDeBridgeGate.SubmissionAutoParamsTo memory autoParams;
-        autoParams.flags = Flags.setFlag(autoParams.flags, Flags.REVERT_IF_EXTERNAL_FAIL, true);
-        autoParams.flags = Flags.setFlag(autoParams.flags, Flags.PROXY_WITH_SENDER, true);
+        autoParams.flags = Flags.setFlag(
+            autoParams.flags,
+            Flags.REVERT_IF_EXTERNAL_FAIL,
+            true
+        );
+        autoParams.flags = Flags.setFlag(
+            autoParams.flags,
+            Flags.PROXY_WITH_SENDER,
+            true
+        );
 
         // fallbackAddress can be used to transfer NFT with deAssets
         autoParams.fallbackAddress = abi.encodePacked(msg.sender);
@@ -505,19 +545,23 @@ contract NFTBridge is
     /// @dev Cross-chain identifier of a native NFT collection
     /// @param _nativeChainId Native chain ID for the NFT collection
     /// @param _nftCollectionAddress Original NFT collection's address on the native chain
-    function getDebridgeId(uint256 _nativeChainId, address _nftCollectionAddress) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(_nativeChainId, _nftCollectionAddress));
+    function getDebridgeId(
+        uint256 _nativeChainId,
+        address _nftCollectionAddress
+    ) public pure returns (bytes32) {
+        return
+            keccak256(abi.encodePacked(_nativeChainId, _nftCollectionAddress));
     }
 
     /// @dev Cross-chain identifier of a native NFT collection
     /// @param _nativeChainId Native chain ID for the NFT collection
     /// @param _nftCollectionAddress Original NFT collection's address on the native chain
-    function getDebridgeId(uint256 _nativeChainId, bytes memory _nftCollectionAddress)
-        public
-        pure
-        returns (bytes32)
-    {
-        return keccak256(abi.encodePacked(_nativeChainId, _nftCollectionAddress));
+    function getDebridgeId(
+        uint256 _nativeChainId,
+        bytes memory _nftCollectionAddress
+    ) public pure returns (bytes32) {
+        return
+            keccak256(abi.encodePacked(_nativeChainId, _nftCollectionAddress));
     }
 
     /// @dev Gets the current chain id

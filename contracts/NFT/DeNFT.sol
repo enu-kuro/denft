@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.7;
+pragma solidity ^0.8.7;
 
 import "./ERC721WithPermitUpgradable.sol";
 import "./interfaces/IDeNFT.sol";
@@ -32,7 +32,10 @@ contract DeNFT is ERC721WithPermitUpgradable, IDeNFT {
 
     /* ========== EVENTS ========== */
 
-    event MinterTransferred(address indexed previousMinter, address indexed newMinter);
+    event MinterTransferred(
+        address indexed previousMinter,
+        address indexed newMinter
+    );
 
     /* ========== CONSTRUCTOR  ========== */
 
@@ -43,7 +46,8 @@ contract DeNFT is ERC721WithPermitUpgradable, IDeNFT {
         address minter_,
         address deNFTBridge_
     ) public initializer {
-        if (deNFTBridge_ == address(0) || minter_ == address(0)) revert ZeroAddress();
+        if (deNFTBridge_ == address(0) || minter_ == address(0))
+            revert ZeroAddress();
         __DeNFT_init(name_, symbol_, baseURI_, minter_, deNFTBridge_);
     }
 
@@ -55,7 +59,11 @@ contract DeNFT is ERC721WithPermitUpgradable, IDeNFT {
         address deNFTBridge_
     ) internal initializer {
         __ERC721WithPermitUpgradable_init(name_, symbol_);
-        __ERC721WithPermitUpgradable_init_unchained(baseURI_, minter_, deNFTBridge_);
+        __ERC721WithPermitUpgradable_init_unchained(
+            baseURI_,
+            minter_,
+            deNFTBridge_
+        );
     }
 
     function __ERC721WithPermitUpgradable_init_unchained(
@@ -85,9 +93,10 @@ contract DeNFT is ERC721WithPermitUpgradable, IDeNFT {
 
     /// @dev Mints multiple tokens sequentially in a single call, taking each token's ID and URI
     ///      from the given arrays correspondingly, and transfers each token to the `msg.sender`
-    function mintMany(
-         uint[] memory _tokenIds, string[] memory _tokenUris
-    ) external  onlyMinter {
+    function mintMany(uint256[] memory _tokenIds, string[] memory _tokenUris)
+        external
+        onlyMinter
+    {
         mintMany(msg.sender, _tokenIds, _tokenUris);
     }
 
@@ -98,7 +107,8 @@ contract DeNFT is ERC721WithPermitUpgradable, IDeNFT {
         uint256[] memory _tokenIds,
         string[] memory _tokenUris
     ) public onlyMinter {
-        if (_tokenIds.length != _tokenUris.length) revert WrongLengthOfArguments();
+        if (_tokenIds.length != _tokenUris.length)
+            revert WrongLengthOfArguments();
 
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             uint256 tokenId = _tokenIds[i];
@@ -114,8 +124,10 @@ contract DeNFT is ERC721WithPermitUpgradable, IDeNFT {
         uint256[] memory _tokenIds,
         string[] memory _tokenUris
     ) external onlyMinter {
-        if (_tokenIds.length != _to.length || _tokenIds.length != _tokenUris.length)
-            revert WrongLengthOfArguments();
+        if (
+            _tokenIds.length != _to.length ||
+            _tokenIds.length != _tokenUris.length
+        ) revert WrongLengthOfArguments();
 
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             uint256 tokenId = _tokenIds[i];
@@ -165,8 +177,17 @@ contract DeNFT is ERC721WithPermitUpgradable, IDeNFT {
     /// @inheritdoc IERC721MetadataUpgradeable
     /// @notice Implementation has been ported from OpenZeppelin's ERC721URIStorageUpgradeable
     ///         (see https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/extensions/ERC721URIStorage.sol)
-    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        require(_exists(tokenId), "ERC721URIStorage: URI query for nonexistent token");
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        require(
+            _exists(tokenId),
+            "ERC721URIStorage: URI query for nonexistent token"
+        );
 
         string memory _tokenURI = _tokenURIs[tokenId];
         string memory base = _baseURI();
