@@ -3,11 +3,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { BigNumber } from "ethers";
 import { deBridge, ethers, upgrades } from "hardhat";
-import {
-  BeaconProxy,
-  DeBridgeNFTDeployer,
-  NFTBridge,
-} from "../typechain-types";
+import { DeBridgeNFTDeployer, NFTBridge } from "../typechain-types";
 
 interface TestSuiteState {
   owner: SignerWithAddress;
@@ -15,7 +11,6 @@ interface TestSuiteState {
   gate: DeBridgeGate;
   gateProtocolFee: BigNumber;
   nftBridge: NFTBridge;
-  deNFT: BeaconProxy;
   deBridgeNFTDeployer: DeBridgeNFTDeployer;
 }
 
@@ -31,13 +26,6 @@ async function deployContracts(): Promise<TestSuiteState> {
   const DeNFTFactory = await ethers.getContractFactory("DeNFT");
 
   const beacon = await upgrades.deployBeacon(DeNFTFactory);
-  const deNFT = (await upgrades.deployBeaconProxy(beacon, DeNFTFactory, [
-    "",
-    "",
-    "",
-    owner.address,
-    nftBridge.address,
-  ])) as BeaconProxy;
 
   const DeBridgeNFTDeployerFactory = await ethers.getContractFactory(
     "DeBridgeNFTDeployer"
@@ -55,7 +43,6 @@ async function deployContracts(): Promise<TestSuiteState> {
     gate,
     gateProtocolFee: await gate.globalFixedNativeFee(),
     nftBridge,
-    deNFT,
     deBridgeNFTDeployer,
   };
 }
@@ -66,12 +53,29 @@ describe("deNFT", function () {
     states = await deployContracts();
   });
 
-  it("createNFT", async function () {
-    const { owner, nftBridge, deBridgeNFTDeployer } = states;
-    await expect(
-      nftBridge.createNFT(owner.address, "Original NFT", "ORGNL", "")
-    ).to.emit(deBridgeNFTDeployer, "NFTDeployed");
-  });
+  it("mint deNFT", async function () {
+    const { owner, user1, nftBridge, deBridgeNFTDeployer } = states;
+    const tx = await nftBridge.createNFT(
+      owner.address,
+      "Original NFT",
+      "ORGNL",
+      ""
+    );
+    const receipt = await tx.wait();
+    const deNFTAddress = receipt
+      .logs!.flatMap((log) =>
+        log.address === deBridgeNFTDeployer.address
+          ? deBridgeNFTDeployer.interface.parseLog(log)
+          : []
+      )
+      .find((event) => {
+        return event.name === "NFTDeployed";
+      })!.args.asset as string;
 
-  // it("mint", async function () {});
+    const DeNFTFactory = await ethers.getContractFactory("DeNFT");
+    const deNFT = DeNFTFactory.attach(deNFTAddress);
+
+    await deNFT.connect(owner).mint(user1.address, 0, "");
+    expect(await (await deNFT.balanceOf(user1.address)).toNumber()).equal(1);
+  });
 });
