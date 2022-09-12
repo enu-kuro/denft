@@ -67,17 +67,10 @@ describe("deNFT", function () {
   });
 
   it("createNFT", async function () {
-    const { owner, nftBridge } = states;
-
-    const tx = await nftBridge.createNFT(
-      owner.address,
-      "Original NFT",
-      "ORGNL",
-      ""
-    );
-    const receipt = await tx.wait();
-    // console.log(receipt.events);
-    expect(nftBridge.createdTokens);
+    const { owner, nftBridge, deBridgeNFTDeployer } = states;
+    await expect(
+      nftBridge.createNFT(owner.address, "Original NFT", "ORGNL", "")
+    ).to.emit(deBridgeNFTDeployer, "NFTDeployed");
   });
 
   // it("mint", async function () {});
