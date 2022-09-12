@@ -1,20 +1,26 @@
 import { DeBridgeGate } from "@debridge-finance/hardhat-debridge/dist/typechain";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { BigNumber, Signer } from "ethers";
+import { BigNumber } from "ethers";
 import { deBridge, ethers, upgrades } from "hardhat";
-import { DeBridgeNFTDeployer, DeNFT, NFTBridge } from "../typechain-types";
+import {
+  BeaconProxy,
+  DeBridgeNFTDeployer,
+  NFTBridge,
+} from "../typechain-types";
 
 interface TestSuiteState {
-  owner: Signer;
+  owner: SignerWithAddress;
+  user1: SignerWithAddress;
   gate: DeBridgeGate;
   gateProtocolFee: BigNumber;
   nftBridge: NFTBridge;
-  deNFT: DeNFT;
+  deNFT: BeaconProxy;
   deBridgeNFTDeployer: DeBridgeNFTDeployer;
 }
 
 async function deployContracts(): Promise<TestSuiteState> {
-  const [owner] = await ethers.getSigners();
+  const [owner, user1] = await ethers.getSigners();
   const gate = await deBridge.emulator.deployGate();
 
   const NFTBridgeFactory = await ethers.getContractFactory("NFTBridge");
@@ -23,24 +29,29 @@ async function deployContracts(): Promise<TestSuiteState> {
   ])) as NFTBridge;
 
   const DeNFTFactory = await ethers.getContractFactory("DeNFT");
-  const deNFT = (await upgrades.deployProxy(DeNFTFactory, [
+
+  const beacon = await upgrades.deployBeacon(DeNFTFactory);
+  const deNFT = (await upgrades.deployBeaconProxy(beacon, DeNFTFactory, [
     "",
     "",
     "",
     owner.address,
     nftBridge.address,
-  ])) as DeNFT;
+  ])) as BeaconProxy;
 
   const DeBridgeNFTDeployerFactory = await ethers.getContractFactory(
     "DeBridgeNFTDeployer"
   );
   const deBridgeNFTDeployer = (await upgrades.deployProxy(
     DeBridgeNFTDeployerFactory,
-    [deNFT.address, nftBridge.address]
+    [beacon.address, nftBridge.address]
   )) as DeBridgeNFTDeployer;
+
+  await nftBridge.setNFTDeployer(deBridgeNFTDeployer.address);
 
   return {
     owner,
+    user1,
     gate,
     gateProtocolFee: await gate.globalFixedNativeFee(),
     nftBridge,
@@ -55,5 +66,19 @@ describe("deNFT", function () {
     states = await deployContracts();
   });
 
-  it("mint", async function () {});
+  it("createNFT", async function () {
+    const { owner, nftBridge } = states;
+
+    const tx = await nftBridge.createNFT(
+      owner.address,
+      "Original NFT",
+      "ORGNL",
+      ""
+    );
+    const receipt = await tx.wait();
+    // console.log(receipt.events);
+    expect(nftBridge.createdTokens);
+  });
+
+  // it("mint", async function () {});
 });
