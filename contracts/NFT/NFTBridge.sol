@@ -357,9 +357,10 @@ contract NFTBridge is
         external
         onlyAdmin
     {
-        if (_chainId == 0 || _chainId == getChainId()) {
-            revert WrongArgument();
-        }
+        // TODO: for emulated environment...
+        // if (_chainId == 0 || _chainId == getChainId()) {
+        //     revert WrongArgument();
+        // }
         getChainInfo[_chainId].nftBridgeAddress = _NFTBridgeAddress;
         getChainInfo[_chainId].isSupported = true;
 
