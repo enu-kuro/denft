@@ -321,7 +321,8 @@ contract NFTBridge is
             _symbol,
             _baseUri
         );
-        createdTokens[currentNFTAddress] = TOKEN_BURNABLE_TYPE;
+        // IOU type
+        createdTokens[currentNFTAddress] = 0; //TOKEN_BURNABLE_TYPE;
     }
 
     /// @inheritdoc IERC721ReceiverUpgradeable

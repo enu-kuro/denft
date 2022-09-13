@@ -100,8 +100,11 @@ describe("deNFT", function () {
     states = await deployContracts();
   });
 
-  it("mint deNFT", async function () {
-    const { owner, user1, nftBridge, deBridgeNFTDeployer } = states;
+  it("bridge deNFT", async function () {
+    const { owner, user1, nftBridge, deBridgeNFTDeployer, gateProtocolFee } =
+      states;
+
+    // createNFT
     const tx = await nftBridge.createNFT(
       owner.address,
       "Original NFT",
@@ -122,10 +125,13 @@ describe("deNFT", function () {
     const DeNFTFactory = await ethers.getContractFactory("DeNFT");
     const deNFT = DeNFTFactory.attach(deNFTAddress);
 
+    // mint
     const tokenId = 0;
     await deNFT.connect(owner).mint(user1.address, tokenId, "");
     expect(await (await deNFT.balanceOf(user1.address)).toNumber()).equal(1);
 
+    // send
+    await deNFT.connect(owner).giveawayToDeNFTBridge();
     const deadline = ethers.constants.MaxUint256;
     const signature = await sign(
       await deNFT.name(),
@@ -138,16 +144,21 @@ describe("deNFT", function () {
       user1
     );
     const chainIdTo = ethers.provider.network.chainId;
-    const tx2 = await nftBridge.send(
-      deNFTAddress,
-      tokenId,
-      deadline,
-      signature,
-      chainIdTo,
-      user1.address,
-      0,
-      0
-    );
+    const tx2 = await nftBridge
+      .connect(user1)
+      .send(
+        deNFTAddress,
+        tokenId,
+        deadline,
+        signature,
+        chainIdTo,
+        user1.address,
+        0,
+        0,
+        {
+          value: gateProtocolFee,
+        }
+      );
     const receipt2 = await tx2.wait();
   });
 });
