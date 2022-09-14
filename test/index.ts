@@ -6,7 +6,6 @@ import { deBridge, ethers, upgrades } from "hardhat";
 import { DeBridgeNFTDeployer, NFTBridge, SimpleNFT } from "../typechain-types";
 
 const TOKEN_ID = 0;
-const SUB_CHAIN_ID = 999;
 
 interface TestSuiteState {
   owner: SignerWithAddress;
@@ -69,13 +68,12 @@ async function deployContracts(): Promise<TestSuiteState> {
   const nftBridge = (await upgrades.deployProxy(NFTBridgeFactory, [
     gate.address,
   ])) as NFTBridge;
-  await nftBridge.enableEmulatedEnv();
+
   // There is only 1 chain in emulated environment...
   await nftBridge.addChainSupport(
     nftBridge.address,
     ethers.provider.network.chainId
   );
-  await nftBridge.addChainSupport(nftBridge.address, SUB_CHAIN_ID);
 
   const DeNFTFactory = await ethers.getContractFactory("DeNFT");
   const beacon = await upgrades.deployBeacon(DeNFTFactory);
@@ -123,22 +121,22 @@ describe("deNFT", function () {
     } = states;
 
     // createNFT
-    // const tx = await nftBridge.createNFT(
-    //   owner.address,
-    //   "Original NFT",
-    //   "ORGNL",
-    //   ""
-    // );
-    // const receipt = await tx.wait();
-    // const deNFTAddress = receipt
-    //   .logs!.flatMap((log) =>
-    //     log.address === deBridgeNFTDeployer.address
-    //       ? deBridgeNFTDeployer.interface.parseLog(log)
-    //       : []
-    //   )
-    //   .find((event) => {
-    //     return event.name === "NFTDeployed";
-    //   })!.args.asset as string;
+    const tx = await nftBridge.createNFT(
+      owner.address,
+      "Original NFT",
+      "ORGNL",
+      ""
+    );
+    const receipt = await tx.wait();
+    const deNFTAddress = receipt
+      .logs!.flatMap((log) =>
+        log.address === deBridgeNFTDeployer.address
+          ? deBridgeNFTDeployer.interface.parseLog(log)
+          : []
+      )
+      .find((event) => {
+        return event.name === "NFTDeployed";
+      })!.args.asset as string;
 
     // const DeNFTFactory = await ethers.getContractFactory("DeNFT");
     // const deNFT = DeNFTFactory.attach(deNFTAddress);
@@ -162,7 +160,7 @@ describe("deNFT", function () {
     //   user1
     // );
 
-    const chainIdTo = SUB_CHAIN_ID; //ethers.provider.network.chainId;
+    const chainIdTo = ethers.provider.network.chainId;
     const tx2 = await nftBridge.connect(user1).send(
       simpleNFT.address,
       TOKEN_ID,
@@ -180,11 +178,9 @@ describe("deNFT", function () {
     expect(await (await simpleNFT.balanceOf(user1.address)).toNumber()).equal(
       0
     );
-    await nftBridge.changeChainIdForEmulatedEnv(SUB_CHAIN_ID);
     await deBridge.emulator.autoClaim();
-    // nftBridge.changeChainIdForEmulatedEnv(ethers.provider.network.chainId);
-    // expect(await (await simpleNFT.balanceOf(user1.address)).toNumber()).equal(
-    //   1
-    // );
+    expect(await (await simpleNFT.balanceOf(user1.address)).toNumber()).equal(
+      1
+    );
   });
 });
