@@ -47,7 +47,6 @@ async function sign(
     },
   };
 
-  // sign Permit
   const signature = await signer._signTypedData(
     typedData.domain,
     { Permit: typedData.types.Permit },
@@ -56,6 +55,7 @@ async function sign(
 
   return signature;
 }
+
 async function deployContracts(): Promise<TestSuiteState> {
   const [owner, user1] = await ethers.getSigners();
   const gate = await deBridge.emulator.deployGate();
@@ -100,7 +100,7 @@ describe("deNFT", function () {
     states = await deployContracts();
   });
 
-  it("bridge deNFT", async function () {
+  it("bridging deNFT among the same chain...", async function () {
     const { owner, user1, nftBridge, deBridgeNFTDeployer, gateProtocolFee } =
       states;
 
@@ -159,6 +159,9 @@ describe("deNFT", function () {
           value: gateProtocolFee,
         }
       );
-    const receipt2 = await tx2.wait();
+
+    expect(await (await deNFT.balanceOf(user1.address)).toNumber()).equal(0);
+    await deBridge.emulator.autoClaim();
+    expect(await (await deNFT.balanceOf(user1.address)).toNumber()).equal(1);
   });
 });

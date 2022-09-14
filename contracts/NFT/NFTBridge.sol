@@ -175,6 +175,7 @@ contract NFTBridge is
             // we are on the secondary chain
             else {
                 IDeNFT(_nftCollectionAddress).burn(_tokenId);
+                revert("Don't use TOKEN_BURNABLE_TYPE!");
             }
 
             //
