@@ -18,6 +18,7 @@ import "@debridge-finance/debridge-protocol-evm-interfaces/contracts/libraries/F
 import "./interfaces/IDeNFT.sol";
 import "./interfaces/INFTBridge.sol";
 import "./DeBridgeNFTDeployer.sol";
+import "hardhat/console.sol";
 
 contract NFTBridge is
     Initializable,
@@ -93,6 +94,22 @@ contract NFTBridge is
     {
         deBridgeGate = _deBridgeGate;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    // for test in emulated environment
+    bool private isEmulatedEnv;
+    uint256 private emulatedEnvChainId;
+    uint256 private originalChainId;
+    error IsNotEmulatedEnv();
+
+    function enableEmulatedEnv() external {
+        isEmulatedEnv = true;
+        uint256 _chainId;
+        assembly {
+            _chainId := chainid()
+        }
+        emulatedEnvChainId = _chainId;
+        originalChainId = _chainId;
     }
 
     /* ========== EXTERNAL METHODS ========== */
@@ -214,7 +231,7 @@ contract NFTBridge is
             deBridgeGate.send{value: msg.value}(
                 address(0), // we transfer native coin as a means of payment
                 msg.value, // _amount of native coin (includes transport fees + optional execution fee amount)
-                _chainIdTo, // _chainIdTo
+                isEmulatedEnv ? originalChainId : _chainIdTo, //TODO: changed for test in emulated env // _chainIdTo
                 abi.encodePacked(getChainInfo[_chainIdTo].nftBridgeAddress), // _receiverAddress
                 "", // _permit
                 false, // _useAssetFee
@@ -438,7 +455,8 @@ contract NFTBridge is
     function _receiveNativeNFT(address _tokenAddress, uint256 _tokenId)
         internal
     {
-        _checkAddAsset(_tokenAddress);
+        // TODO: Is it ok to comment out?
+        // _checkAddAsset(_tokenAddress);
         _safeTransferFrom(_tokenAddress, msg.sender, address(this), _tokenId);
     }
 
@@ -568,10 +586,24 @@ contract NFTBridge is
             keccak256(abi.encodePacked(_nativeChainId, _nftCollectionAddress));
     }
 
+    function changeChainIdForEmulatedEnv(uint256 cid) public {
+        if (!isEmulatedEnv) {
+            revert IsNotEmulatedEnv();
+        }
+        if (!getChainInfo[cid].isSupported) {
+            revert ChainToIsNotSupported();
+        }
+        emulatedEnvChainId = cid;
+    }
+
     /// @dev Gets the current chain id
     function getChainId() public view virtual returns (uint256 cid) {
-        assembly {
-            cid := chainid()
+        if (isEmulatedEnv) {
+            cid = emulatedEnvChainId;
+        } else {
+            assembly {
+                cid := chainid()
+            }
         }
     }
 
