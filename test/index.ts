@@ -3,7 +3,9 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { BigNumber, BigNumberish, Contract } from "ethers";
 import { deBridge, ethers, upgrades } from "hardhat";
-import { DeBridgeNFTDeployer, NFTBridge } from "../typechain-types";
+import { DeBridgeNFTDeployer, NFTBridge, SimpleNFT } from "../typechain-types";
+
+const TOKEN_ID = 0;
 
 interface TestSuiteState {
   owner: SignerWithAddress;
@@ -12,7 +14,9 @@ interface TestSuiteState {
   gateProtocolFee: BigNumber;
   nftBridge: NFTBridge;
   deBridgeNFTDeployer: DeBridgeNFTDeployer;
+  simpleNFT: SimpleNFT;
 }
+
 async function sign(
   name: string,
   nftAddress: string,
@@ -84,6 +88,11 @@ async function deployContracts(): Promise<TestSuiteState> {
 
   await nftBridge.setNFTDeployer(deBridgeNFTDeployer.address);
 
+  const SimpleNFTFactory = await ethers.getContractFactory("SimpleNFT");
+  const simpleNFT = (await SimpleNFTFactory.deploy()) as SimpleNFT;
+  await simpleNFT.mintNFT(user1.address, TOKEN_ID, "");
+  await simpleNFT.connect(user1).approve(nftBridge.address, TOKEN_ID);
+
   return {
     owner,
     user1,
@@ -91,6 +100,7 @@ async function deployContracts(): Promise<TestSuiteState> {
     gateProtocolFee: await gate.globalFixedNativeFee(),
     nftBridge,
     deBridgeNFTDeployer,
+    simpleNFT,
   };
 }
 
@@ -101,8 +111,14 @@ describe("deNFT", function () {
   });
 
   it("bridging deNFT among the same chain...", async function () {
-    const { owner, user1, nftBridge, deBridgeNFTDeployer, gateProtocolFee } =
-      states;
+    const {
+      owner,
+      user1,
+      nftBridge,
+      deBridgeNFTDeployer,
+      gateProtocolFee,
+      simpleNFT,
+    } = states;
 
     // createNFT
     const tx = await nftBridge.createNFT(
@@ -122,46 +138,49 @@ describe("deNFT", function () {
         return event.name === "NFTDeployed";
       })!.args.asset as string;
 
-    const DeNFTFactory = await ethers.getContractFactory("DeNFT");
-    const deNFT = DeNFTFactory.attach(deNFTAddress);
+    // const DeNFTFactory = await ethers.getContractFactory("DeNFT");
+    // const deNFT = DeNFTFactory.attach(deNFTAddress);
 
-    // mint
-    const tokenId = 0;
-    await deNFT.connect(owner).mint(user1.address, tokenId, "");
-    expect(await (await deNFT.balanceOf(user1.address)).toNumber()).equal(1);
+    // // mint
+    // const tokenId = 0;
+    // await deNFT.connect(owner).mint(user1.address, tokenId, "");
+    // expect(await (await deNFT.balanceOf(user1.address)).toNumber()).equal(1);
 
     // send
-    await deNFT.connect(owner).giveawayToDeNFTBridge();
-    const deadline = ethers.constants.MaxUint256;
-    const signature = await sign(
-      await deNFT.name(),
-      deNFTAddress,
-      nftBridge.address,
-      tokenId,
-      await deNFT.nonces(tokenId),
-      deadline,
-      ethers.provider.network.chainId,
-      user1
-    );
-    const chainIdTo = ethers.provider.network.chainId;
-    const tx2 = await nftBridge
-      .connect(user1)
-      .send(
-        deNFTAddress,
-        tokenId,
-        deadline,
-        signature,
-        chainIdTo,
-        user1.address,
-        0,
-        0,
-        {
-          value: gateProtocolFee,
-        }
-      );
+    // await deNFT.connect(owner).giveawayToDeNFTBridge();
+    // const deadline = ethers.constants.MaxUint256;
+    // const signature = await sign(
+    //   await deNFT.name(),
+    //   deNFTAddress,
+    //   nftBridge.address,
+    //   tokenId,
+    //   await deNFT.nonces(tokenId),
+    //   deadline,
+    //   ethers.provider.network.chainId,
+    //   user1
+    // );
 
-    expect(await (await deNFT.balanceOf(user1.address)).toNumber()).equal(0);
+    const chainIdTo = ethers.provider.network.chainId;
+    const tx2 = await nftBridge.connect(user1).send(
+      simpleNFT.address,
+      TOKEN_ID,
+      // deadline,
+      // signature,
+      chainIdTo,
+      user1.address,
+      0,
+      0,
+      {
+        value: gateProtocolFee,
+      }
+    );
+
+    expect(await (await simpleNFT.balanceOf(user1.address)).toNumber()).equal(
+      0
+    );
     await deBridge.emulator.autoClaim();
-    expect(await (await deNFT.balanceOf(user1.address)).toNumber()).equal(1);
+    expect(await (await simpleNFT.balanceOf(user1.address)).toNumber()).equal(
+      1
+    );
   });
 });

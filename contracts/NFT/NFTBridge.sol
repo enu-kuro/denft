@@ -101,8 +101,8 @@ contract NFTBridge is
     ///         It obtains an object from the sender and constructs a message to operate the object on the target chain
     /// @param _nftCollectionAddress NFT collection's address in the current chain
     /// @param _tokenId ID of an object from the given NFT collection to transfer
-    /// @param _permitDeadline ERC-4494-compliant permit deadline
-    /// @param _permitSignature ERC-4494-compliant permit signature to obtain the given object
+    // @param _permitDeadline ERC-4494-compliant permit deadline
+    // @param _permitSignature ERC-4494-compliant permit signature to obtain the given object
     /// @param _chainIdTo Target chain id to transfer the given object to
     /// @param _receiverAddress Address on the target chain to transfer the bridged object to
     /// @param _executionFee  Fee to be paid to the claim transaction executor on target chain.
@@ -110,8 +110,8 @@ contract NFTBridge is
     function send(
         address _nftCollectionAddress,
         uint256 _tokenId,
-        uint256 _permitDeadline,
-        bytes memory _permitSignature,
+        // uint256 _permitDeadline,
+        // bytes memory _permitSignature,
         uint256 _chainIdTo,
         address _receiverAddress,
         uint256 _executionFee,
@@ -124,14 +124,14 @@ contract NFTBridge is
         }
 
         // run permit first
-        if (_permitSignature.length > 0) {
-            IERC4494(_nftCollectionAddress).permit(
-                address(this),
-                _tokenId,
-                _permitDeadline,
-                _permitSignature
-            );
-        }
+        // if (_permitSignature.length > 0) {
+        //     IERC4494(_nftCollectionAddress).permit(
+        //         address(this),
+        //         _tokenId,
+        //         _permitDeadline,
+        //         _permitSignature
+        //     );
+        // }
 
         bool isNativeToken;
         bytes memory targetData;
@@ -166,6 +166,7 @@ contract NFTBridge is
                 ) {
                     _checkAddAsset(_nftCollectionAddress);
                     IDeNFT(_nftCollectionAddress).burn(_tokenId);
+                    revert("Don't use TOKEN_BURNABLE_TYPE!");
                 }
                 // hold the object on this contract address
                 else {
